@@ -648,7 +648,7 @@ with tab1:
 
         detail_left, detail_right = st.columns([1, 1])
         with detail_left:
-            st.markdown("**Nutrition (cuisine avg per 100g)**")
+            st.markdown('<p style="color:#1a1a1a;font-weight:bold">Nutrition (cuisine avg per 100g)</p>', unsafe_allow_html=True)
             nut_data = {
                 "Nutrient": ["Calories", "Fat", "Protein", "Carbs"],
                 "Value": [
@@ -668,17 +668,17 @@ with tab1:
             st.dataframe(pd.DataFrame(nut_data), hide_index=True, use_container_width=True)
 
         with detail_right:
-            st.markdown("**Contact & Info**")
+            st.markdown('<p style="color:#1a1a1a;font-weight:bold">Contact & Info</p>', unsafe_allow_html=True)
             addr = row.get("address") or ""
-            if addr: st.markdown(f"📍 {addr}")
+            if addr: st.markdown(f'<p style="color:#1a1a1a">📍 {addr}</p>', unsafe_allow_html=True)
             phone = row.get("phone")
-            if phone and str(phone).strip(): st.markdown(f"📞 {phone}")
+            if phone and str(phone).strip(): st.markdown(f'<p style="color:#1a1a1a">📞 {phone}</p>', unsafe_allow_html=True)
             website = row.get("website")
-            if website and str(website).strip(): st.markdown(f"🌐 [{website}]({website})")
+            if website and str(website).strip(): st.markdown(f'<p style="color:#1a1a1a">🌐 <a href="{website}" style="color:#2d5a27">{website}</a></p>', unsafe_allow_html=True)
             hours = row.get("opening_hours")
-            if hours and str(hours).strip(): st.markdown(f"🕐 {hours}")
+            if hours and str(hours).strip(): st.markdown(f'<p style="color:#1a1a1a">🕐 {hours}</p>', unsafe_allow_html=True)
             nbhd = row.get("neighborhood")
-            if nbhd and str(nbhd).strip(): st.markdown(f"📌 {nbhd}")
+            if nbhd and str(nbhd).strip(): st.markdown(f'<p style="color:#1a1a1a">📌 {nbhd}</p>', unsafe_allow_html=True)
 
         if row.get("review_text") and str(row["review_text"]).strip():
             with st.expander("📝 Sample Reviews"):
