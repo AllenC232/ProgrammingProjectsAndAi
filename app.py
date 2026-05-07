@@ -28,7 +28,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# (sidebar CSS removed)
+# ── Theme Toggle ──────────────────────────────────────────────
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = False
+_dark = st.session_state.dark_mode
 
 
 # ── Constants ─────────────────────────────────────────────────
@@ -62,108 +65,97 @@ CUISINE_MAP = {
     "cafe": ["coffee", "pastry", "sandwich"], "unknown": ["meal", "food"],
 }
 
-# ── Custom CSS ────────────────────────────────────────────────
-st.markdown("""
+# ── Custom CSS (dynamic light/dark) ──────────────────────────
+_bg = "#141414" if _dark else "#fafaf8"
+_surface = "#1e1e1e" if _dark else "#ffffff"
+_surface_hover = "#2a2a2a" if _dark else "#f5f5f2"
+_border = "#333333" if _dark else "#e8e6e1"
+_text1 = "#e8e8e8" if _dark else "#1a1a1a"
+_text2 = "#a0a0a0" if _dark else "#6b6b6b"
+_textm = "#666666" if _dark else "#9a9a9a"
+_accent = "#4a9e3f" if _dark else "#2d5a27"
+_accent_lt = "#1a2e18" if _dark else "#e8f0e6"
+_hero_bg = "#0a0a0a" if _dark else "#1a1a1a"
+_shadow_o = "0.25" if _dark else "0.06"
+_card_chart_bg = "#1a1a1a" if _dark else "#f5f4f0"
+
+st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,700&display=swap');
 
-:root {
-    --bg: #fafaf8;
-    --surface: #ffffff;
-    --surface-hover: #f5f5f2;
-    --border: #e8e6e1;
-    --text-primary: #1a1a1a;
-    --text-secondary: #6b6b6b;
-    --text-muted: #9a9a9a;
-    --accent: #2d5a27;
-    --accent-light: #e8f0e6;
+:root {{
+    --bg: {_bg};
+    --surface: {_surface};
+    --surface-hover: {_surface_hover};
+    --border: {_border};
+    --text-primary: {_text1};
+    --text-secondary: {_text2};
+    --text-muted: {_textm};
+    --accent: {_accent};
+    --accent-light: {_accent_lt};
     --accent-warm: #c4854c;
-    --score-excellent: #2d5a27;
-    --score-great: #5a8a4f;
+    --score-excellent: {_accent};
+    --score-great: {"#6db85f" if _dark else "#5a8a4f"};
     --score-decent: #c4854c;
     --score-low: #c47832;
     --score-poor: #b84233;
     --radius: 12px;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
-    --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
-    --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
-}
+    --shadow-sm: 0 1px 3px rgba(0,0,0,{_shadow_o});
+    --shadow-md: 0 4px 16px rgba(0,0,0,{_shadow_o});
+    --shadow-lg: 0 8px 32px rgba(0,0,0,{_shadow_o});
+}}
 
-html, body, [class*="css"] { font-family: 'Outfit', sans-serif; color: var(--text-primary); }
-#MainMenu, footer, header { visibility: hidden; }
-.stApp { background: var(--bg); }
+html, body, [class*="css"] {{ font-family: 'Outfit', sans-serif; color: var(--text-primary); }}
+#MainMenu, footer, header {{ visibility: hidden; }}
+.stApp {{ background: var(--bg); }}
 
 /* Tabs */
-button[data-baseweb="tab"] { font-family: 'Outfit', sans-serif !important; }
-button[data-baseweb="tab"] p { color: var(--text-secondary) !important; font-weight: 500 !important; font-size: 15px !important; }
-button[aria-selected="true"] p { color: var(--text-primary) !important; font-weight: 700 !important; }
-div[data-testid="stCheckbox"] label p { color: var(--text-primary) !important; }
+button[data-baseweb="tab"] {{ font-family: 'Outfit', sans-serif !important; }}
+button[data-baseweb="tab"] p {{ color: var(--text-secondary) !important; font-weight: 500 !important; font-size: 15px !important; }}
+button[aria-selected="true"] p {{ color: var(--text-primary) !important; font-weight: 700 !important; }}
+div[data-testid="stCheckbox"] label p {{ color: var(--text-primary) !important; }}
 
 /* Hero */
-.dd-hero {
-    background: var(--text-primary);
+.dd-hero {{
+    background: {_hero_bg};
     border-radius: 20px;
     padding: 40px 44px 36px;
     margin-bottom: 28px;
     position: relative;
     overflow: hidden;
-}
-.dd-hero::before {
+}}
+.dd-hero::before {{
     content: '';
     position: absolute;
-    right: -40px;
-    top: -40px;
-    width: 260px;
-    height: 260px;
+    right: -40px; top: -40px;
+    width: 260px; height: 260px;
     background: radial-gradient(circle, rgba(45,90,39,0.3) 0%, transparent 70%);
     border-radius: 50%;
-}
-.dd-hero::after {
+}}
+.dd-hero::after {{
     content: '';
     position: absolute;
-    left: 30%;
-    bottom: -60px;
-    width: 200px;
-    height: 200px;
+    left: 30%; bottom: -60px;
+    width: 200px; height: 200px;
     background: radial-gradient(circle, rgba(196,133,76,0.15) 0%, transparent 70%);
     border-radius: 50%;
-}
-.dd-hero h1 {
-    font-family: 'Fraunces', serif;
-    font-size: 48px;
-    color: #ffffff;
-    margin: 0 0 8px 0;
-    letter-spacing: -1.5px;
-    position: relative;
-    z-index: 1;
-}
-.dd-hero p {
-    color: rgba(255,255,255,0.55);
-    font-size: 15px;
-    margin: 0 0 20px 0;
-    font-weight: 400;
-    letter-spacing: 0.3px;
-    position: relative;
-    z-index: 1;
-}
-.dd-pill {
+}}
+.dd-hero h1 {{ font-family: 'Fraunces', serif; font-size: 48px; color: #ffffff; margin: 0 0 8px 0; letter-spacing: -1.5px; position: relative; z-index: 1; }}
+.dd-hero p {{ color: rgba(255,255,255,0.55); font-size: 15px; margin: 0 0 20px 0; font-weight: 400; letter-spacing: 0.3px; position: relative; z-index: 1; }}
+.dd-pill {{
     display: inline-block;
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,255,255,0.12);
     border-radius: 100px;
-    padding: 6px 16px;
-    font-size: 13px;
+    padding: 6px 16px; font-size: 13px;
     color: rgba(255,255,255,0.7);
-    margin-right: 8px;
-    margin-top: 4px;
-    font-weight: 500;
-    position: relative;
-    z-index: 1;
+    margin-right: 8px; margin-top: 4px;
+    font-weight: 500; position: relative; z-index: 1;
     backdrop-filter: blur(4px);
-}
+}}
 
 /* Cards */
-.dd-card {
+.dd-card {{
     background: var(--surface);
     border-radius: var(--radius);
     padding: 20px 24px;
@@ -174,120 +166,83 @@ div[data-testid="stCheckbox"] label p { color: var(--text-primary) !important; }
     justify-content: space-between;
     align-items: flex-start;
     transition: all 0.2s ease;
-}
-.dd-card:hover {
-    box-shadow: var(--shadow-md);
-    border-color: #d5d3ce;
-    transform: translateY(-1px);
-}
-.dd-card-left { flex: 1; }
-.dd-card-right { text-align: right; min-width: 100px; padding-left: 16px; }
-.dd-card-name {
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 6px;
-    letter-spacing: -0.3px;
-}
-.dd-cuisine-tag {
+}}
+.dd-card:hover {{ box-shadow: var(--shadow-md); transform: translateY(-1px); }}
+.dd-card-left {{ flex: 1; }}
+.dd-card-right {{ text-align: right; min-width: 100px; padding-left: 16px; }}
+.dd-card-name {{ font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; letter-spacing: -0.3px; }}
+.dd-cuisine-tag {{
     display: inline-block;
     background: var(--accent-light);
     color: var(--accent);
     border-radius: 100px;
-    padding: 3px 12px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: capitalize;
-    letter-spacing: 0.2px;
-}
-.dd-detail { font-size: 13px; color: var(--text-secondary); margin-top: 6px; }
-.dd-rating {
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--text-primary);
-    line-height: 1;
-    letter-spacing: -1px;
-}
-.dd-stars { color: var(--accent-warm); font-size: 12px; margin-top: 2px; letter-spacing: 1px; }
-.dd-price { font-size: 14px; color: var(--accent); font-weight: 700; margin-top: 4px; }
-.dd-ns-badge {
-    display: inline-block;
-    color: #fff;
-    border-radius: 6px;
-    padding: 2px 8px;
-    font-size: 11px;
-    font-weight: 800;
-    text-transform: uppercase;
-    margin-right: 6px;
-}
-.dd-sentiment-pos { color: var(--accent); font-weight: 600; }
-.dd-sentiment-neg { color: var(--score-poor); font-weight: 600; }
+    padding: 3px 12px; font-size: 11px; font-weight: 600;
+    text-transform: capitalize; letter-spacing: 0.2px;
+}}
+.dd-detail {{ font-size: 13px; color: var(--text-secondary); margin-top: 6px; }}
+.dd-rating {{ font-size: 28px; font-weight: 800; color: var(--text-primary); line-height: 1; letter-spacing: -1px; }}
+.dd-stars {{ color: var(--accent-warm); font-size: 12px; margin-top: 2px; letter-spacing: 1px; }}
+.dd-price {{ font-size: 14px; color: var(--accent); font-weight: 700; margin-top: 4px; }}
+.dd-ns-badge {{ display: inline-block; color: #fff; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-right: 6px; }}
+.dd-sentiment-pos {{ color: var(--accent); font-weight: 600; }}
+.dd-sentiment-neg {{ color: var(--score-poor); font-weight: 600; }}
+.dd-section {{ font-size: 22px; font-weight: 700; color: var(--text-primary); border-left: 3px solid var(--accent); padding-left: 14px; margin: 28px 0 16px; letter-spacing: -0.5px; }}
+.dd-empty {{ text-align: center; color: var(--text-muted); padding: 56px 0; font-size: 15px; }}
 
-/* Section header */
-.dd-section {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--text-primary);
-    border-left: 3px solid var(--accent);
-    padding-left: 14px;
-    margin: 28px 0 16px;
-    letter-spacing: -0.5px;
-}
-
-/* Metric cards */
-.dd-metric {
-    background: var(--surface);
-    border-radius: var(--radius);
-    padding: 20px 24px;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
-    text-align: center;
-}
-.dd-metric-val {
-    font-size: 32px;
-    font-weight: 800;
-    color: var(--accent);
-    letter-spacing: -1px;
-}
-.dd-metric-lbl {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    font-weight: 500;
-}
-
-/* Empty state */
-.dd-empty {
-    text-align: center;
-    color: var(--text-muted);
-    padding: 56px 0;
-    font-size: 15px;
-}
-/* Force dark text on metric cards and detail panel */
+/* Force readable text in metrics and detail panel */
 div[data-testid="stMetric"] label,
 div[data-testid="stMetric"] div[data-testid="stMetricValue"],
-div[data-testid="stMetric"] div[data-testid="stMetricLabel"] {
-    color: #1a1a1a !important;
-}
+div[data-testid="stMetric"] div[data-testid="stMetricLabel"] {{ color: {_text1} !important; }}
 div[data-testid="stExpander"] summary,
-div[data-testid="stExpander"] div { color: #1a1a1a !important; }
-div[data-testid="stDataFrame"] { color: #1a1a1a !important; }
+div[data-testid="stExpander"] div {{ color: {_text1} !important; }}
+div[data-testid="stDataFrame"] {{ color: {_text1} !important; }}
 
-/* Fix selectbox and other widget text */
 div[data-testid="stSelectbox"] label p,
 div[data-testid="stTextInput"] label p,
 div[data-testid="stSlider"] label p,
 div[data-testid="stCheckbox"] label p,
-div[data-testid="stMultiSelect"] label p {
-    color: #1a1a1a !important;
-}
+div[data-testid="stMultiSelect"] label p {{ color: {_text1} !important; }}
 
-/* Fix "nan" display — handle via metric styling */
-div[data-testid="stMetricValue"] div {
-    color: #1a1a1a !important;
-}
+/* Sidebar styling */
+section[data-testid="stSidebar"] {{ background: {"#0a0a0a" if _dark else "#1a1a2e"}; }}
+section[data-testid="stSidebar"] * {{ color: {"#d0d0d0" if _dark else "#e8edf5"} !important; }}
+section[data-testid="stSidebar"] h3 {{ color: #ffffff !important; }}
+
+/* Prominent sidebar toggle when collapsed */
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"] {{
+    background: {_accent} !important;
+    border-radius: 10px !important;
+    padding: 10px 14px !important;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.3) !important;
+    z-index: 99999 !important;
+    position: fixed !important;
+    top: 0.6rem !important;
+    left: 0.6rem !important;
+    border: 2px solid {_accent} !important;
+}}
+[data-testid="stSidebarCollapsedControl"] svg,
+[data-testid="collapsedControl"] svg {{
+    color: #ffffff !important;
+    fill: #ffffff !important;
+    width: 20px !important;
+    height: 20px !important;
+}}
+[data-testid="stSidebarCollapsedControl"]::after,
+[data-testid="collapsedControl"]::after {{
+    content: " Filters";
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-family: Outfit, Arial, sans-serif !important;
+    margin-left: 6px !important;
+    font-size: 14px !important;
+}}
+[data-testid="stSidebarCollapsedControl"]:hover,
+[data-testid="collapsedControl"]:hover {{
+    transform: scale(1.05);
+    filter: brightness(1.15);
+    transition: all 0.15s ease;
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -513,9 +468,15 @@ neighborhoods = sorted(df["neighborhood"].dropna().unique().tolist()) if "neighb
 with st.sidebar:
     st.markdown("### 🍜 Filters")
 
-    if st.button("🔄 Refresh Data", use_container_width=True, type="primary"):
-        st.cache_data.clear()
-        st.rerun()
+    _c1, _c2 = st.columns(2)
+    with _c1:
+        if st.button("🔄 Refresh", use_container_width=True, type="primary"):
+            st.cache_data.clear()
+            st.rerun()
+    with _c2:
+        if st.button("🌙 Dark" if not _dark else "☀️ Light", use_container_width=True):
+            st.session_state.dark_mode = not st.session_state.dark_mode
+            st.rerun()
 
     st.markdown("---")
     search_q    = st.text_input("Search by name", placeholder="e.g. pizza, sushi...")
@@ -604,6 +565,12 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 
+# ── Toolbar ───────────────────────────────────────────────────
+_toolbar_left, _toolbar_right = st.columns([1, 5])
+with _toolbar_left:
+    if st.button("🔍 Show Filters", use_container_width=True, type="secondary"):
+        st.sidebar.write("")  # forces sidebar to render/open
+
 # ── Tabs ──────────────────────────────────────────────────────
 tab1, tab2, tab3, tab4 = st.tabs(["🔍 Search", "🗺️ Map", "📊 Analytics", "🤖 Recommender"])
 
@@ -648,7 +615,7 @@ with tab1:
 
         detail_left, detail_right = st.columns([1, 1])
         with detail_left:
-            st.markdown('<p style="color:#1a1a1a;font-weight:bold">Nutrition (cuisine avg per 100g)</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color:{_text1};font-weight:bold">Nutrition (cuisine avg per 100g)</p>', unsafe_allow_html=True)
             nut_data = {
                 "Nutrient": ["Calories", "Fat", "Protein", "Carbs"],
                 "Value": [
@@ -668,17 +635,17 @@ with tab1:
             st.dataframe(pd.DataFrame(nut_data), hide_index=True, use_container_width=True)
 
         with detail_right:
-            st.markdown('<p style="color:#1a1a1a;font-weight:bold">Contact & Info</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color:{_text1};font-weight:bold">Contact & Info</p>', unsafe_allow_html=True)
             addr = row.get("address") or ""
-            if addr: st.markdown(f'<p style="color:#1a1a1a">📍 {addr}</p>', unsafe_allow_html=True)
+            if addr: st.markdown(f'<p style="color:{_text1}">📍 {addr}</p>', unsafe_allow_html=True)
             phone = row.get("phone")
-            if phone and str(phone).strip(): st.markdown(f'<p style="color:#1a1a1a">📞 {phone}</p>', unsafe_allow_html=True)
+            if phone and str(phone).strip(): st.markdown(f'<p style="color:{_text1}">📞 {phone}</p>', unsafe_allow_html=True)
             website = row.get("website")
-            if website and str(website).strip(): st.markdown(f'<p style="color:#1a1a1a">🌐 <a href="{website}" style="color:#2d5a27">{website}</a></p>', unsafe_allow_html=True)
+            if website and str(website).strip(): st.markdown(f'<p style="color:{_text1}">🌐 <a href="{website}" style="color:{_accent}">{website}</a></p>', unsafe_allow_html=True)
             hours = row.get("opening_hours")
-            if hours and str(hours).strip(): st.markdown(f'<p style="color:#1a1a1a">🕐 {hours}</p>', unsafe_allow_html=True)
+            if hours and str(hours).strip(): st.markdown(f'<p style="color:{_text1}">🕐 {hours}</p>', unsafe_allow_html=True)
             nbhd = row.get("neighborhood")
-            if nbhd and str(nbhd).strip(): st.markdown(f'<p style="color:#1a1a1a">📌 {nbhd}</p>', unsafe_allow_html=True)
+            if nbhd and str(nbhd).strip(): st.markdown(f'<p style="color:{_text1}">📌 {nbhd}</p>', unsafe_allow_html=True)
 
         if row.get("review_text") and str(row["review_text"]).strip():
             with st.expander("📝 Sample Reviews"):
@@ -763,9 +730,9 @@ with tab3:
     st.markdown("<br>", unsafe_allow_html=True)
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 9))
-    fig.patch.set_facecolor("#fafaf8")
+    fig.patch.set_facecolor("#141414" if _dark else "#fafaf8")
     fig.suptitle("DishDash Analytics — NYU Area", fontsize=15,
-                 fontweight="bold", color="#1a1a1a", y=1.01)
+                 fontweight="bold", color=("#e8e8e8" if _dark else "#1a1a1a"), y=1.01)
 
     # 1. Rating histogram
     ax = axes[0, 0]
@@ -785,9 +752,9 @@ with tab3:
             if c:
                 ax.text(b.get_x() + b.get_width() / 2, c + 0.1, str(c),
                         ha="center", va="bottom", fontsize=8)
-    ax.set_title("⭐ Rating Distribution", fontweight="bold", color="#1a1a1a")
+    ax.set_title("⭐ Rating Distribution", fontweight="bold", color=("#e8e8e8" if _dark else "#1a1a1a"))
     ax.set_ylabel("Restaurants")
-    ax.set_facecolor("#f5f4f0")
+    ax.set_facecolor("#1a1a1a" if _dark else "#f5f4f0")
     ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
 
     # 2. Cuisine pie
@@ -804,7 +771,7 @@ with tab3:
         )
         for t in ts:  t.set_fontsize(8)
         for at in ats: at.set_fontsize(7); at.set_color("white"); at.set_fontweight("bold")
-    ax.set_title("🍴 Cuisine Breakdown", fontweight="bold", color="#1a1a1a")
+    ax.set_title("🍴 Cuisine Breakdown", fontweight="bold", color=("#e8e8e8" if _dark else "#1a1a1a"))
 
     # 3. Calories by cuisine
     ax = axes[1, 0]
@@ -822,9 +789,9 @@ with tab3:
         patches = [mpatches.Patch(color=v, label=f"Nutri-Score {k.upper()}")
                    for k, v in NS_COLOR.items()]
         ax.legend(handles=patches, fontsize=7, loc="lower right")
-    ax.set_title("🔥 Avg Calories / 100g by Cuisine", fontweight="bold", color="#1a1a1a")
+    ax.set_title("🔥 Avg Calories / 100g by Cuisine", fontweight="bold", color=("#e8e8e8" if _dark else "#1a1a1a"))
     ax.set_xlabel("kcal / 100g")
-    ax.set_facecolor("#f5f4f0")
+    ax.set_facecolor("#1a1a1a" if _dark else "#f5f4f0")
     ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
 
     # 4. Sentiment or Rating vs Price
@@ -837,7 +804,7 @@ with tab3:
         for b in bs:
             ax.text(b.get_x() + b.get_width() / 2, b.get_height() + 0.2,
                     str(int(b.get_height())), ha="center", fontweight="bold")
-        ax.set_title(f"😊 Review Sentiment (n={sc.sum()})", fontweight="bold", color="#1a1a1a")
+        ax.set_title(f"😊 Review Sentiment (n={sc.sum()})", fontweight="bold", color=("#e8e8e8" if _dark else "#1a1a1a"))
     else:
         sdf = df[df["google_rating"].notna() & df["price_level"].notna()].copy()
         pm  = {"$": 1, "$$": 2, "$$$": 3, "$$$$": 4}
@@ -852,9 +819,9 @@ with tab3:
             ax.set_xticks([1, 2, 3, 4])
             ax.set_xticklabels(["Cheap", "Mid", "Pricey", "Luxury"], fontsize=12)
             ax.set_ylim(2.5, 5.2)
-        ax.set_title("💰 Rating vs Price Level", fontweight="bold", color="#1a1a1a")
+        ax.set_title("💰 Rating vs Price Level", fontweight="bold", color=("#e8e8e8" if _dark else "#1a1a1a"))
         ax.set_xlabel("Price Level"); ax.set_ylabel("Google Rating")
-    ax.set_facecolor("#f5f4f0")
+    ax.set_facecolor("#1a1a1a" if _dark else "#f5f4f0")
     ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
 
     try:
