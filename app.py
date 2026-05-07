@@ -265,6 +265,29 @@ div[data-testid="stCheckbox"] label p { color: var(--text-primary) !important; }
     padding: 56px 0;
     font-size: 15px;
 }
+/* Force dark text on metric cards and detail panel */
+div[data-testid="stMetric"] label,
+div[data-testid="stMetric"] div[data-testid="stMetricValue"],
+div[data-testid="stMetric"] div[data-testid="stMetricLabel"] {
+    color: #1a1a1a !important;
+}
+div[data-testid="stExpander"] summary,
+div[data-testid="stExpander"] div { color: #1a1a1a !important; }
+div[data-testid="stDataFrame"] { color: #1a1a1a !important; }
+
+/* Fix selectbox and other widget text */
+div[data-testid="stSelectbox"] label p,
+div[data-testid="stTextInput"] label p,
+div[data-testid="stSlider"] label p,
+div[data-testid="stCheckbox"] label p,
+div[data-testid="stMultiSelect"] label p {
+    color: #1a1a1a !important;
+}
+
+/* Fix "nan" display — handle via metric styling */
+div[data-testid="stMetricValue"] div {
+    color: #1a1a1a !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -617,11 +640,11 @@ with tab1:
         c1, c2, c3, c4 = st.columns(4)
         r_val = row.get("google_rating")
         c1.metric("Google Rating", f"{r_val:.1f}" if pd.notna(r_val) else "-")
-        c2.metric("Price", row.get("price_level") or "-")
+        c2.metric("Price", row.get("price_level") if pd.notna(row.get("price_level")) and row.get("price_level") else "-")
         dd_val = row.get("dd_score")
         c3.metric("DishDash Score", f"{dd_val:.1f}/10" if pd.notna(dd_val) else "-")
         ns_val_d = row.get("nutriscore")
-        c4.metric("Nutri-Score", str(ns_val_d).upper() if ns_val_d else "-")
+        c4.metric("Nutri-Score", str(ns_val_d).upper() if pd.notna(ns_val_d) and ns_val_d and str(ns_val_d).lower() not in ("nan", "none", "unknown") else "-")
 
         detail_left, detail_right = st.columns([1, 1])
         with detail_left:
