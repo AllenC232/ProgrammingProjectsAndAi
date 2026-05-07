@@ -250,7 +250,7 @@ section[data-testid="stSidebar"] h3 {{ color: #ffffff !important; }}
 # ── Data loading ──────────────────────────────────────────────
 
 def compute_dd_score(df):
-    """Composite 0-10 score for every venue."""
+    """Composite 0-10 score for every venue. Also assigns estimated ratings."""
     NS_SCORE = {"a": 10, "b": 8, "c": 5, "d": 2, "e": 0}
     CUISINE_AVG = {
         "sushi": 4.4, "japanese": 4.3, "italian": 4.3, "french": 4.3,
@@ -264,6 +264,19 @@ def compute_dd_score(df):
     rows = df.copy()
     rows["google_rating"] = pd.to_numeric(rows.get("google_rating"), errors="coerce")
     rows["rating_count"]  = pd.to_numeric(rows.get("rating_count"), errors="coerce")
+
+    # Assign estimated rating for venues with no Google data
+    def est_rating(row):
+        if pd.notna(row["google_rating"]):
+            return row["google_rating"]
+        cuisine = str(row.get("cuisine_key") or "unknown")
+        base = CUISINE_AVG.get(cuisine, 3.8)
+        # Add small Nutri-Score bonus: healthier cuisines get a slight bump
+        ns = str(row.get("nutriscore") or "").lower()
+        ns_bump = {"a": 0.15, "b": 0.08, "c": 0.0, "d": -0.05, "e": -0.1}.get(ns, 0)
+        return round(min(max(base + ns_bump, 1.0), 5.0), 1)
+
+    rows["display_rating"] = rows.apply(est_rating, axis=1)
 
     def calc(row):
         r, rc = row["google_rating"], row.get("rating_count")
@@ -401,8 +414,17 @@ def make_demo():
 
 def render_card(row):
     r     = row.get("google_rating")
-    r_str = f"{r:.1f}" if pd.notna(r) else "—"
-    stars = ("★" * int(round(r)) + "☆" * (5 - int(round(r)))) if pd.notna(r) else ""
+    disp_r = row.get("display_rating", r)
+    conf  = row.get("dd_confidence", "ok")
+    if pd.notna(r):
+        r_str = f"{r:.1f}"
+        stars = "★" * int(round(r)) + "☆" * (5 - int(round(r)))
+    elif pd.notna(disp_r):
+        r_str = f"~{disp_r:.1f}"
+        stars = "★" * int(round(disp_r)) + "☆" * (5 - int(round(disp_r)))
+    else:
+        r_str = "—"
+        stars = ""
     price = row.get("price_level") or ""
     ns    = str(row.get("nutriscore") or "").lower()
     ns_bg = NS_COLOR.get(ns, "#aaa")
@@ -412,7 +434,7 @@ def render_card(row):
     cal_s = f"{int(cal)} kcal/100g" if pd.notna(cal) else ""
     addr  = row.get("address") or row.get("addr") or ""
     rc    = row.get("rating_count")
-    rc_s  = f"({int(rc):,} reviews)" if pd.notna(rc) and rc else ""
+    rc_s  = f"({int(rc):,} reviews)" if pd.notna(rc) and rc else ("(estimated)" if conf == "estimated" else "")
     sent  = row.get("sentiment_label")
     sent_html = ""
     if sent:
@@ -565,12 +587,6 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 
-# ── Toolbar ───────────────────────────────────────────────────
-_toolbar_left, _toolbar_right = st.columns([1, 5])
-with _toolbar_left:
-    if st.button("🔍 Show Filters", use_container_width=True, type="secondary"):
-        st.sidebar.write("")  # forces sidebar to render/open
-
 # ── Tabs ──────────────────────────────────────────────────────
 tab1, tab2, tab3, tab4 = st.tabs(["🔍 Search", "🗺️ Map", "📊 Analytics", "🤖 Recommender"])
 
@@ -606,7 +622,14 @@ with tab1:
 
         c1, c2, c3, c4 = st.columns(4)
         r_val = row.get("google_rating")
-        c1.metric("Google Rating", f"{r_val:.1f}" if pd.notna(r_val) else "-")
+        disp_r_val = row.get("display_rating", r_val)
+        conf_val = row.get("dd_confidence", "ok")
+        if pd.notna(r_val):
+            c1.metric("Google Rating", f"{r_val:.1f}")
+        elif pd.notna(disp_r_val):
+            c1.metric("Est. Rating", f"~{disp_r_val:.1f}")
+        else:
+            c1.metric("Rating", "-")
         c2.metric("Price", row.get("price_level") if pd.notna(row.get("price_level")) and row.get("price_level") else "-")
         dd_val = row.get("dd_score")
         c3.metric("DishDash Score", f"{dd_val:.1f}/10" if pd.notna(dd_val) else "-")
