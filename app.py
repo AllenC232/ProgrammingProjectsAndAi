@@ -708,7 +708,7 @@ with tab1:
 
         detail_left, detail_right = st.columns([1, 1])
         with detail_left:
-            st.markdown(f(f'<p style="color:{_text1};font-weight:bold">Nutrition (cuisine avg per 100g){" — estimated" if row.get("nutrition_estimated") else ""}</p>'), unsafe_allow_html=True)
+            st.markdown(f'<p style="color:{_text1};font-weight:bold">Nutrition (cuisine avg per 100g){" - estimated" if row.get("nutrition_estimated") else ""}</p>', unsafe_allow_html=True)
             nut_data = {
                 "Nutrient": ["Calories", "Fat", "Protein", "Carbs"],
                 "Value": [
