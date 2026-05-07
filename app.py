@@ -249,6 +249,73 @@ section[data-testid="stSidebar"] h3 {{ color: #ffffff !important; }}
 
 # ── Data loading ──────────────────────────────────────────────
 
+def estimate_nutrition(df):
+    """Fill missing nutrition data with estimates based on cuisine averages.
+    Venues with 'unknown' cuisine get the overall cross-cuisine average."""
+    # Cross-cuisine averages (computed from the 17 known cuisine profiles)
+    CUISINE_NUTRITION = {
+        "pizza":         {"cal": 266, "fat": 11.2, "protein": 11.4, "carbs": 30.2, "ns": "d"},
+        "italian":       {"cal": 312, "fat": 12.8, "protein": 10.6, "carbs": 38.4, "ns": "c"},
+        "chinese":       {"cal":  64, "fat":  2.2, "protein":  3.8, "carbs":  9.6, "ns": "a"},
+        "japanese":      {"cal": 152, "fat":  3.1, "protein":  8.8, "carbs": 21.4, "ns": "b"},
+        "sushi":         {"cal": 143, "fat":  2.8, "protein":  9.2, "carbs": 19.6, "ns": "a"},
+        "mexican":       {"cal": 198, "fat":  7.6, "protein":  9.4, "carbs": 24.8, "ns": "c"},
+        "burger":        {"cal": 295, "fat": 16.4, "protein": 15.2, "carbs": 22.8, "ns": "d"},
+        "american":      {"cal": 248, "fat": 11.8, "protein": 12.6, "carbs": 24.2, "ns": "c"},
+        "indian":        {"cal": 186, "fat":  8.2, "protein":  7.8, "carbs": 22.4, "ns": "c"},
+        "thai":          {"cal": 162, "fat":  6.4, "protein":  8.6, "carbs": 18.8, "ns": "b"},
+        "mediterranean": {"cal": 184, "fat":  9.6, "protein":  7.4, "carbs": 18.2, "ns": "b"},
+        "french":        {"cal": 338, "fat": 18.6, "protein":  8.2, "carbs": 34.6, "ns": "c"},
+        "korean":        {"cal": 148, "fat":  4.8, "protein":  9.6, "carbs": 18.4, "ns": "b"},
+        "vietnamese":    {"cal": 112, "fat":  2.4, "protein":  7.8, "carbs": 16.4, "ns": "a"},
+        "sandwich":      {"cal": 226, "fat":  8.4, "protein": 11.2, "carbs": 26.8, "ns": "c"},
+        "coffee_shop":   {"cal":  62, "fat":  1.8, "protein":  2.4, "carbs":  9.6, "ns": "b"},
+        "cafe":          {"cal": 118, "fat":  4.2, "protein":  4.8, "carbs": 16.2, "ns": "b"},
+    }
+    # Overall average across all cuisines (for "unknown" types)
+    all_cals = [v["cal"] for v in CUISINE_NUTRITION.values()]
+    all_fats = [v["fat"] for v in CUISINE_NUTRITION.values()]
+    all_pros = [v["protein"] for v in CUISINE_NUTRITION.values()]
+    all_carbs = [v["carbs"] for v in CUISINE_NUTRITION.values()]
+    OVERALL_AVG = {
+        "cal": round(sum(all_cals) / len(all_cals), 1),
+        "fat": round(sum(all_fats) / len(all_fats), 1),
+        "protein": round(sum(all_pros) / len(all_pros), 1),
+        "carbs": round(sum(all_carbs) / len(all_carbs), 1),
+        "ns": "c",  # middle grade for unknown
+    }
+
+    rows = df.copy()
+
+    for col, key in [("avg_cal", "cal"), ("avg_fat", "fat"), ("avg_protein", "protein"), ("avg_carbs", "carbs")]:
+        if col not in rows.columns:
+            rows[col] = None
+        rows[col] = pd.to_numeric(rows[col], errors="coerce")
+
+    # Track which rows we estimate
+    rows["nutrition_estimated"] = False
+
+    for idx, row in rows.iterrows():
+        if pd.notna(row.get("avg_cal")) and row["avg_cal"] > 0:
+            continue  # already has real data
+
+        cuisine = str(row.get("cuisine_key") or "unknown")
+        profile = CUISINE_NUTRITION.get(cuisine, OVERALL_AVG)
+
+        rows.at[idx, "avg_cal"]     = profile["cal"]
+        rows.at[idx, "avg_fat"]     = profile["fat"]
+        rows.at[idx, "avg_protein"] = profile["protein"]
+        rows.at[idx, "avg_carbs"]   = profile["carbs"]
+        rows.at[idx, "nutrition_estimated"] = True
+
+        # Only fill nutriscore if missing
+        ns = row.get("nutriscore")
+        if not ns or str(ns).lower() in ("nan", "none", "unknown", ""):
+            rows.at[idx, "nutriscore"] = profile["ns"]
+
+    return rows
+
+
 def compute_dd_score(df):
     """Composite 0-10 score for every venue. Also assigns estimated ratings."""
     NS_SCORE = {"a": 10, "b": 8, "c": 5, "d": 2, "e": 0}
@@ -345,10 +412,12 @@ def load_data():
             if c not in df.columns:
                 df[c] = None
 
+        # Estimate nutrition for venues missing it
+        df = estimate_nutrition(df)
         df = compute_dd_score(df)
         return df, "live"
     except Exception:
-        return compute_dd_score(make_demo()), "demo"
+        return compute_dd_score(estimate_nutrition(make_demo())), "demo"
 
 
 def make_demo():
@@ -431,7 +500,8 @@ def render_card(row):
     ns_html = f'<span class="dd-ns-badge" style="background:{ns_bg}">{ns.upper()}</span>' if ns else ""
     cuisine = str(row.get("cuisine_key") or "").replace("_", " ").title()
     cal   = row.get("avg_cal")
-    cal_s = f"{int(cal)} kcal/100g" if pd.notna(cal) else ""
+    is_nutr_est = row.get("nutrition_estimated", False)
+    cal_s = (f"~{int(cal)} kcal/100g" if is_nutr_est else f"{int(cal)} kcal/100g") if pd.notna(cal) else ""
     addr  = row.get("address") or row.get("addr") or ""
     rc    = row.get("rating_count")
     rc_s  = f"({int(rc):,} reviews)" if pd.notna(rc) and rc else ("(estimated)" if conf == "estimated" else "")
@@ -638,7 +708,7 @@ with tab1:
 
         detail_left, detail_right = st.columns([1, 1])
         with detail_left:
-            st.markdown(f'<p style="color:{_text1};font-weight:bold">Nutrition (cuisine avg per 100g)</p>', unsafe_allow_html=True)
+            st.markdown(f(f'<p style="color:{_text1};font-weight:bold">Nutrition (cuisine avg per 100g){" — estimated" if row.get("nutrition_estimated") else ""}</p>'), unsafe_allow_html=True)
             nut_data = {
                 "Nutrient": ["Calories", "Fat", "Protein", "Carbs"],
                 "Value": [
