@@ -153,6 +153,9 @@ Example Queries
 "Healthy cheap food near me"
 "Best-rated Italian restaurants under $15"
 "High protein meals near NYU"
+
+
+```
 Future Improvements
 Personalized recommendations
 User accounts and saved preferences
@@ -166,10 +169,3 @@ OpenStreetMap
 Google Places API
 Open Food Facts
 Hugging Face
-
----
-
-If you want next level polish, I can also:
-- add **GitHub badges (build, license, tech stack)**
-- include **screenshots section**
-- or make a **1-minute recruiter version** (super useful for internships)
