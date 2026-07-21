@@ -86,6 +86,7 @@ A unified score that ranks restaurants based on:
 ---
 
 ## Project Structure
+
 DishDash/
 │
 ├── data/
