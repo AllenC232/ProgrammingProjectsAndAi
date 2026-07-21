@@ -120,7 +120,7 @@ DishDash/
 
 ---
 
-## Team — Altman’s Angels
+## Team — 
 
 | Member    | Contributions |
 |----------|--------------|
